@@ -14,7 +14,6 @@ class NoteRepoImpl(
 
     override suspend fun getNoteById(noteId: String): Result<Exception, Note> {
         return getLocalNote(noteId)
-
     }
 
     override suspend fun deleteNote(note: Note): Result<Exception, Unit> {
