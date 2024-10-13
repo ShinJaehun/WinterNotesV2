@@ -11,3 +11,10 @@ internal const val ColorLIGHTBLUE = "#1AA7EC"
 
 internal const val REQUEST_CODE_STORAGE_PERMISSION = 11
 internal const val REQUEST_CODE_SELECT_IMAGE = 12
+
+enum class ImageStatus {
+    LOADED,
+    CHANGED,
+    DELETED,
+    NULL
+}

@@ -83,7 +83,6 @@ class NoteDetailViewModel(
     private fun newNote() {
         noteState.value =
             Note("0", "", "", currentTime(), null, null, null)
-//        noteChangedState.value = true
     }
 
     private fun updateNote(
@@ -94,17 +93,6 @@ class NoteDetailViewModel(
         webLink: String?
     ) = launch {
         Log.i(TAG, "note before save: ${note.value!!}")
-
-//        val updateResult = noteRepo.insertOrUpdateNote(
-//            note.value!!.copy(
-//                title = title,
-//                contents = contents,
-//                dateTime = currentTime(),
-//                imagePath = if (imagePath == null && note.value!!.imagePath != null) note.value!!.imagePath else imagePath,
-//                color = color,
-//                webLink = webLink
-//            )
-//        )
 
         val updateResult = noteRepo.insertOrUpdateNote(
             note.value!!.copy(
@@ -138,22 +126,10 @@ class NoteDetailViewModel(
             //로컬 이미지처리 때문에 좀 복잡하게 움직임...
             noteRepo.insertOrUpdateNote(note.value!!.copy(imagePath = null))
         }
-//        noteState.value = note.value!!.copy(imagePath=null)
-
-//        launch {
-//            val updateResult = noteRepo.insertOrUpdateNote(note.value!!.copy(imagePath = null))
-//            when (updateResult) {
-//                is Result.Value -> updatedState.value = true
-//                is Result.Error -> updatedState.value = false
-//            }
-//        }
-        // 이렇게 하면 뷰에서 viewModel.updated.observe 가 트리거 -> noteListView로 navigate
     }
 
     private fun changeNoteColor(color: String?) {
         noteColorState.value = color
-//        note.value!!.copy(color = color) // 뭐 이런 식으로 바로 note를 저장한다?
-
     }
 
     private fun changeWebLink(webLink: String?) {

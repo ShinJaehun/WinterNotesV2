@@ -1,6 +1,7 @@
 package com.shinjaehun.winternotesv2.note.notedetail
 
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build.VERSION_CODES.P
@@ -8,15 +9,19 @@ import android.os.Bundle
 import android.provider.MediaStore.PickerMediaColumns.DISPLAY_NAME
 import android.provider.OpenableColumns
 import android.util.Log
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -29,6 +34,7 @@ import com.shinjaehun.winternotesv2.common.ColorLIGHTBLUE
 import com.shinjaehun.winternotesv2.common.ColorPINK
 import com.shinjaehun.winternotesv2.common.ColorYELLOW
 import com.shinjaehun.winternotesv2.common.FileUtils
+import com.shinjaehun.winternotesv2.common.ImageStatus
 import com.shinjaehun.winternotesv2.common.makeToast
 import com.shinjaehun.winternotesv2.common.toEditable
 import com.shinjaehun.winternotesv2.databinding.FragmentNoteDetailBinding
@@ -40,18 +46,10 @@ import java.util.Locale
 
 private const val TAG = "NoteDetailView"
 
-enum class ImageStatus {
-    LOADED,
-    CHANGED,
-    DELETED,
-    NULL
-}
-
 class NoteDetailView : Fragment() {
 
     private lateinit var binding: FragmentNoteDetailBinding
     private lateinit var viewModel: NoteDetailViewModel
-    //    private var imageFilePath: String? = null // 이렇게 하는게 맞는지는 모르겠음...
     private var note: Note? = null
     private lateinit var imageStatus: ImageStatus
 
@@ -101,12 +99,6 @@ class NoteDetailView : Fragment() {
                 val colorCode = String.format("#%06X", (0xFFFFFF and gradientDrawable.color!!.defaultColor))
 
                 val webUrl = binding.tvWebUrl.text.toString()
-
-//                if (viewModel.noteChanged.value == true) {
-//
-//                } else {
-//                    Log.i(TAG, "노트를 업데이트 하려고 했는데 변한게 없네요...")
-//                }
 
                 // new or update note
                 if (note!!.title == title &&
@@ -173,9 +165,9 @@ class NoteDetailView : Fragment() {
     }
 
     private fun showImageFromPath(path: String) {
-        Log.i(TAG, "[showImageFromPath]path: $path")
-        Log.i(TAG, "[showImageFromPath]path from uri: ${Uri.parse(path).path.toString()}")
-        Log.i(TAG, "[showImageFromPath]uri of path: ${Uri.parse(path)}")
+//        Log.i(TAG, "[showImageFromPath]path: $path")
+//        Log.i(TAG, "[showImageFromPath]path from uri: ${Uri.parse(path).path.toString()}")
+//        Log.i(TAG, "[showImageFromPath]uri of path: ${Uri.parse(path)}")
 
         binding.ivNote.setImageURI(Uri.parse(path))
 
@@ -189,31 +181,9 @@ class NoteDetailView : Fragment() {
         }
     }
 
-//    private fun showImage(uri: Uri) {
-//        binding.ivNote.setImageURI(uri)
-//
-//        binding.ivNote.visibility = View.VISIBLE
-//        binding.ivNote.tag = uri
-//
-//        binding.ivDeleteImage.visibility = View.VISIBLE
-//        binding.ivDeleteImage.setOnClickListener {
-//            if(File(uri.path).exists()){
-//                Log.i(TAG, "image deleted")
-//                File(uri.path).delete()
-//            }
-//            viewModel.handleEvent(
-//                NoteDetailEvent.OnNoteImageDeleteClick
-//            )
-//        }
-//    }
-
     private fun showImageFromUri(uri: Uri) {
-//  Selected URI: content://media/picker/0/com.android.providers.media.photopicker/media/1000000036
-//  [showImageFromUri]uri: content://media/picker/0/com.android.providers.media.photopicker/media/1000000036
-//  [showImageFromUri]path from uri: /picker/0/com.android.providers.media.photopicker/media/1000000036
-
-        Log.i(TAG, "[showImageFromUri]uri: $uri")
-        Log.i(TAG, "[showImageFromUri]path from uri: ${uri.path.toString()}")
+//        Log.i(TAG, "[showImageFromUri]uri: $uri")
+//        Log.i(TAG, "[showImageFromUri]path from uri: ${uri.path.toString()}")
 
         binding.ivNote.setImageURI(uri)
 
@@ -336,18 +306,6 @@ class NoteDetailView : Fragment() {
                     }
                 }
 
-//                if (note != null) {
-//                    if (note!!.imagePath != null) {
-//                        if (File(note!!.imagePath!!).exists()) {
-//                            Log.i(TAG, "image exists!!")
-//                            File(note!!.imagePath!!).delete()
-//                            Log.i(TAG, "image deleted!")
-//                        }
-//                    } else {
-//                        Log.i(TAG, "이미지 파일이 없는 상황... 또는 uri만 주어지거나 ")
-//                    }
-//                }
-
                 binding.ivNote.visibility = View.GONE
                 binding.ivDeleteImage.visibility = View.GONE
 
@@ -383,6 +341,11 @@ class NoteDetailView : Fragment() {
         viewModel.deleted.observe(
             viewLifecycleOwner,
             Observer {
+                if (note!!.imagePath != null) {
+                    if (File(note!!.imagePath!!).exists()) {
+                        File(note!!.imagePath!!).delete()
+                    }
+                }
                 findNavController().navigate(R.id.noteListView)
             }
         )
@@ -467,22 +430,84 @@ class NoteDetailView : Fragment() {
 
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
+
+        binding.misc.layoutAddUrl.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            showAddURLDialog()
+        }
+
+        binding.misc.layoutDeleteNote.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            showDeleteNoteDialog()
+        }
+    }
+
+    private fun showAddURLDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        val v: View = LayoutInflater.from(requireContext()).inflate(
+            R.layout.layout_add_url, view?.findViewById(R.id.layout_addUrlContainer)
+        )
+        builder.setView(v)
+        val dialogAddURL: AlertDialog = builder.create()
+        if (dialogAddURL.window != null) {
+            dialogAddURL.window!!.setBackgroundDrawable(ColorDrawable(0))
+        }
+        val inputURL = v.findViewById<EditText>(R.id.et_url)
+        inputURL.requestFocus()
+
+        v.findViewById<TextView>(R.id.tv_AddUrl).setOnClickListener {
+            if(inputURL.text.toString().trim().isEmpty()){
+                showErrorState("Enter URL")
+            } else if (!Patterns.WEB_URL.matcher(inputURL.text.toString()).matches()) {
+                showErrorState("Enter valid URL")
+            } else {
+                viewModel.handleEvent(
+                    NoteDetailEvent.OnWebLinkChange(inputURL.text.toString().trim())
+                )
+                dialogAddURL.dismiss()
+            }
+        }
+
+        v.findViewById<TextView>(R.id.tv_AddUrl_Cancel).setOnClickListener {
+            dialogAddURL.dismiss()
+        }
+
+        dialogAddURL.show()
+    }
+
+
+
+    private fun showDeleteNoteDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        val v: View = LayoutInflater.from(requireContext()).inflate(
+            R.layout.layout_delete_note, view?.findViewById(R.id.layout_DeleteNoteContainer)
+        )
+        builder.setView(v)
+        val dialogDeleteNote: AlertDialog = builder.create()
+        if (dialogDeleteNote.window != null) {
+            dialogDeleteNote.window!!.setBackgroundDrawable(ColorDrawable(0))
+        }
+
+        v.findViewById<TextView>(R.id.tv_DeleteNote).setOnClickListener {
+            viewModel.handleEvent(
+                NoteDetailEvent.OnDeleteClick
+            )
+            dialogDeleteNote.dismiss()
+        }
+
+        v.findViewById<TextView>(R.id.tv_DeleteNote_Cancel).setOnClickListener {
+            dialogDeleteNote.dismiss()
+        }
+
+        dialogDeleteNote.show()
     }
 
     val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         // Callback is invoked after the user selects a media item or closes the
         // photo picker.
         if (uri != null) {
-            Log.i(TAG, "[registerForActivityResult]uri: $uri")
-            Log.i(TAG, "[registerForActivityResult]path from uri: ${uri.path.toString()}")
-
-//            Log.i(TAG, "mime type: ${requireActivity().contentResolver.getType(uri)}")
-//            Log.i(TAG, "file extensions: ${MimeTypeMap.getSingleton().getExtensionFromMimeType(requireActivity().contentResolver.getType(uri))}")
-//            Log.d("PhotoPicker", "Selected URI: $uri")
-
-//            val selectedImageFile =
-//                    FileUtils.fileFromContentUri(requireActivity(), uri)
-//                Log.i(TAG, "selectedImageFile path: ${selectedImageFile.path}")
+//            Log.i(TAG, "[registerForActivityResult]uri: $uri")
+//            Log.i(TAG, "[registerForActivityResult]path from uri: ${uri.path.toString()}")
 
             viewModel.handleEvent(
                 NoteDetailEvent.OnNoteImageChange(uri)
@@ -492,7 +517,6 @@ class NoteDetailView : Fragment() {
             Log.d("PhotoPicker", "No media selected")
         }
     }
-
 
     private fun showErrorState(errorMessage: String) = makeToast(errorMessage)
 }
