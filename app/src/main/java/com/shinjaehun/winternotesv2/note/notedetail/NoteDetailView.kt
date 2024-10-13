@@ -111,39 +111,42 @@ class NoteDetailView : Fragment() {
                 // new or update note
                 if (note!!.title == title &&
                     note!!.contents == contents &&
-                    binding.ivNote.tag == null && // 여기에 뭐가 남아 있다면 uri가 변경된 거고... 이미지 변경한 거지
-                    imageStatus != ImageStatus.DELETED &&
-                    imageStatus != ImageStatus.CHANGED &&
                     note!!.color == colorCode &&
-                    note!!.webLink == webUrl) {
+                    note!!.webLink == webUrl &&
+                    binding.ivNote.tag == null && // 여기에 뭐가 남아 있다면 uri가 변경된 거고... 이미지 변경한 거지
+                    imageStatus != ImageStatus.DELETED
+                ) {
                     // 하나도 바뀌지 않은 경우...
                     Log.i(TAG, "노트 업데이트하려고 했는데 변화 없음!")
+                    Log.i(TAG, "imageStatus: $imageStatus")
+
                     findNavController().navigate(R.id.noteListView)
                 } else {
                     // 뭔가 변경된 경우
                     Log.i(TAG, "변경/업데이트")
 
                     val selectedImageFilePath = if (binding.ivNote.tag != null) {
-                        // 이미지 pick으로 URI가 존재
-                        Log.i(TAG, "uri of tag: ${(binding.ivNote.tag as Uri).path.toString()}")
+                        Log.i(TAG, "새로운 이미지 생성됨")
+                        // 이미지 pick으로 URI가 존재, 새로운 이미지 생성
+//                        Log.i(TAG, "uri of tag: ${(binding.ivNote.tag as Uri).path.toString()}")
+                        if(imageStatus == ImageStatus.CHANGED && note!!.imagePath != null) {
+                            if (File(note!!.imagePath!!).exists()) {
+                                File(note!!.imagePath!!).delete()
+                                Log.i(TAG, "이미지 바꿨는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요...")
+                            }
+                        }
                         FileUtils.fileFromContentUri(requireActivity(), binding.ivNote.tag as Uri).path
-                    } else if (imageStatus != ImageStatus.DELETED) {
-                        // 이미지를 삭제하지 않은 상태(원래 이미지... 이게 new note인 경우 null일 수도 있음), 이미지 pick은 없음
+                    } else if (imageStatus == ImageStatus.LOADED) {
+                        // 이미지를 삭제하지 않은 상태(원래 이미지)
+                        Log.i(TAG, "예전 이미지 그대로 가기")
                         note!!.imagePath
-                    } else {
-                        // 이미지 삭제를 비롯한 경우
+                    } else if (imageStatus == ImageStatus.NULL) {
+                        // 이미지가 없었어요
+                        Log.i(TAG, "예전 이미지 없었음")
                         null
-                    }
-
-                    // 이 로직이 동작하지 않는 이유는...
-                    if (
-                        note!!.imagePath != null &&
-                        note!!.imagePath != selectedImageFilePath && // 예전 이미지와 달라짐
-                        binding.ivNote.tag != null && // 이미지 pick된 상황
-                        imageStatus == ImageStatus.CHANGED// 이미지 변경되어서 예전 이미지 필요 없어짐
-                        ) {
-                        if(File(note!!.imagePath!!).exists())
-                            File(note!!.imagePath!!).delete()
+                    } else {
+                        Log.i(TAG, "selectedImageFilePath가 null인디 이렇게 해도 되나요? 아마 이미지 삭제된 상태일 듯")
+                        null
                     }
 
                     Log.i(TAG, "imageStatus: $imageStatus")
@@ -158,39 +161,6 @@ class NoteDetailView : Fragment() {
                         )
                     )
                 }
-
-//                val selectedImagePath: String? = binding.ivNote.tag as String?
-//                Log.i(TAG, "selectedImagePath: $selectedImagePath")
-
-                // 이미지 선택하고/삭제할 때는 파일을 복사하지 말고
-                // tag에 uri 정보를 넣어뒀다가 save 할 때만 파일 경로를 추출하고 싶었음!
-                // 이렇게 했을 때 문제는
-                // 이미지 선택 외에 정상적인 정보 갱신의 경우 tag에 아무것도 없기 때문에 이미지가 NULL이 되고 만다는 것!!!!
-                // 방법이 없을까?
-
-//                val selectedImageFile = if (binding.ivNote.tag != null) {
-//                    Log.i(TAG, "uri of tag: ${(binding.ivNote.tag as Uri).path.toString()}")
-//                    FileUtils.fileFromContentUri(requireActivity(), binding.ivNote.tag as Uri)
-////                    Log.i(TAG, "selectedImageFile path: ${selectedImageFile.path}")
-//                } else null
-
-                //어디서 발생하는지 모르겠는데 uri로 바꾼 다음부터 노트 저장할 때 꼭 이런 오류메시지가...
-                //ContextImpl             com.shinjaehun.winternotesv2         W  Failed to ensure /storage/0EF8-2D15/Android/data/com.shinjaehun.winternotesv2/files: android.os.ServiceSpecificException:  (code -22)
-
-//                val gradientDrawable = binding.viewSubtitleIndicator.background as GradientDrawable
-//                val colorCode = String.format("#%06X", (0xFFFFFF and gradientDrawable.color!!.defaultColor))
-
-//                val webUrl = binding.tvWebUrl.text.toString().ifEmpty { null }
-
-//                viewModel.handleEvent(
-//                    NoteDetailEvent.OnDoneClick(
-//                        title = binding.etNoteTitle.text.toString(),
-//                        contents = binding.etNoteContent.text.toString(),
-//                        imagePath = selectedImageFile?.path,
-//                        color = colorCode,
-//                        webLink = webUrl
-//                    )
-//                )
             }
         }
 
@@ -352,10 +322,18 @@ class NoteDetailView : Fragment() {
                 if (imagePath != null) {
                     if(File(imagePath).exists()) {
                         File(imagePath).delete()
+                        Log.i(TAG, "이미지 삭제했어요...")
+                        imageStatus = ImageStatus.DELETED
                     }
-                    imageStatus = ImageStatus.DELETED
                 } else {
-                    Log.i(TAG, "이미지 파일이 없는 상황... 또는 uri만 주어지거나 ")
+                    if(imageStatus == ImageStatus.CHANGED && note!!.imagePath != null) {
+                        if(File(note!!.imagePath!!).exists()) {
+                            File(note!!.imagePath!!).delete()
+                            Log.i(TAG, "이미지 바꿨는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요...")
+                            imageStatus = ImageStatus.DELETED
+                            // 얘전 이미지를 삭제한 것에 불과하지만 이미지가 삭제된 상태임을 알려야 update가 갱신된다...
+                        }
+                    }
                 }
 
 //                if (note != null) {
@@ -509,7 +487,7 @@ class NoteDetailView : Fragment() {
             viewModel.handleEvent(
                 NoteDetailEvent.OnNoteImageChange(uri)
             )
-
+            imageStatus = ImageStatus.CHANGED
         } else {
             Log.d("PhotoPicker", "No media selected")
         }
