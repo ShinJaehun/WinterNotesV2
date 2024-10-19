@@ -1,19 +1,15 @@
-package com.shinjaehun.winternotesv2.note.notedetail
+package com.shinjaehun.winternotesv2.view.notedetail
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
-import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
-import android.provider.MediaStore.PickerMediaColumns.DISPLAY_NAME
-import android.provider.OpenableColumns
 import android.util.Log
 import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.MimeTypeMap
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -40,9 +36,6 @@ import com.shinjaehun.winternotesv2.common.toEditable
 import com.shinjaehun.winternotesv2.databinding.FragmentNoteDetailBinding
 import com.shinjaehun.winternotesv2.model.Note
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 private const val TAG = "NoteDetailView"
 

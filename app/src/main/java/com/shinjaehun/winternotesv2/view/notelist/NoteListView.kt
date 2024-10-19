@@ -1,4 +1,4 @@
-package com.shinjaehun.winternotesv2.note.notelist
+package com.shinjaehun.winternotesv2.view.notelist
 
 import android.os.Bundle
 import android.util.Log
@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.shinjaehun.winternotesv2.R
 import com.shinjaehun.winternotesv2.common.makeToast
 import com.shinjaehun.winternotesv2.databinding.FragmentNoteListBinding
-import java.util.Timer
 
 private const val TAG = "NoteListView"
 

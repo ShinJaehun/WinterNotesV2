@@ -1,4 +1,4 @@
-package com.shinjaehun.winternotesv2.note.notelist
+package com.shinjaehun.winternotesv2.view.notelist
 
 import androidx.recyclerview.widget.DiffUtil
 import com.shinjaehun.winternotesv2.model.Note

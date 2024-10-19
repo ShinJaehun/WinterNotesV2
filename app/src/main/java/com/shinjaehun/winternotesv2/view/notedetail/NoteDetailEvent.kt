@@ -1,4 +1,4 @@
-package com.shinjaehun.winternotesv2.note.notedetail
+package com.shinjaehun.winternotesv2.view.notedetail
 
 import android.net.Uri
 

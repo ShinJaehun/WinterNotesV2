@@ -1,11 +1,10 @@
-package com.shinjaehun.winternotesv2.note.notedetail
+package com.shinjaehun.winternotesv2.view.notedetail
 
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.shinjaehun.winternotesv2.common.BaseViewModel
-import com.shinjaehun.winternotesv2.common.FileUtils
 import com.shinjaehun.winternotesv2.common.GET_NOTE_ERROR
 import com.shinjaehun.winternotesv2.common.Result
 import com.shinjaehun.winternotesv2.common.currentTime
@@ -82,7 +81,7 @@ class NoteDetailViewModel(
 
     private fun newNote() {
         noteState.value =
-            Note("0", "", "", currentTime(), null, null, null)
+            Note("0", "", "", currentTime(), null, null, null, null)
     }
 
     private fun updateNote(

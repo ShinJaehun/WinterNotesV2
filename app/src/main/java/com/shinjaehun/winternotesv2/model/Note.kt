@@ -7,5 +7,6 @@ data class Note (
     val dateTime: String,
     val imagePath: String?,
     val color: String?,
-    val webLink: String?
+    val webLink: String?,
+    val creator: User?
 )

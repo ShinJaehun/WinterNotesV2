@@ -1,15 +1,51 @@
 package com.shinjaehun.winternotesv2.model
 
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.shinjaehun.winternotesv2.common.Result
+import com.shinjaehun.winternotesv2.common.awaitTaskResult
 import com.shinjaehun.winternotesv2.common.toNote
 import com.shinjaehun.winternotesv2.common.toNoteListFromRoomNoteList
 import com.shinjaehun.winternotesv2.common.toRoomNote
+import com.shinjaehun.winternotesv2.common.toUser
+
+private const val COLLECTION_NAME = "notes"
 
 class NoteRepoImpl(
+    val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
+    val remote: FirebaseFirestore = FirebaseFirestore.getInstance(),
     val local: NoteDao
 ): INoteRepository {
     override suspend fun getNotes(): Result<Exception, List<Note>> {
-        return getLocalNotes()
+        val user = getActiveUser()
+        return if (user != null) getRemoteNotes(user)
+        else getLocalNotes()
+    }
+
+    private fun getActiveUser(): User? {
+        return firebaseAuth.currentUser?.toUser
+    }
+
+    private suspend fun getRemoteNotes(user: User): Result<Exception, List<Note>> {
+        return try {
+            val task = awaitTaskResult(
+                remote.collection(COLLECTION_NAME)
+                    .whereEqualTo("creator", user.uid)
+                    .get()
+            )
+            resultToNoteList(task)
+        } catch (e: Exception) {
+            Result.build { throw e }
+        }
+    }
+
+    private fun resultToNoteList(result: QuerySnapshot?): Result<Exception, List<Note>> {
+        val noteList = mutableListOf<Note>()
+        result?.forEach { documentSnapshot ->
+            noteList.add(documentSnapshot.toObject(FirebaseNote::class.java).toNote)
+        }
+        return Result.build { noteList }
     }
 
     override suspend fun getNoteById(noteId: String): Result<Exception, Note> {

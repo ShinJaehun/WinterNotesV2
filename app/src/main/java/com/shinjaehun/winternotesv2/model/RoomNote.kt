@@ -29,5 +29,8 @@ data class RoomNote (
     val color: String? = null,
 
     @ColumnInfo(name = "web_link")
-    val webLink: String? = null
+    val webLink: String? = null,
+
+    @ColumnInfo(name = "creator_id")
+    val creatorId: String
 )

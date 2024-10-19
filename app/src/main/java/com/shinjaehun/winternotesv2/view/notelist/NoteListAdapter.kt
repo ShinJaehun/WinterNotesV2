@@ -1,4 +1,4 @@
-package com.shinjaehun.winternotesv2.note.notelist
+package com.shinjaehun.winternotesv2.view.notelist
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
