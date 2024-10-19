@@ -4,7 +4,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.shinjaehun.winternotesv2.common.Result
+import com.shinjaehun.winternotesv2.common.awaitTaskCompletable
 import com.shinjaehun.winternotesv2.common.awaitTaskResult
+import com.shinjaehun.winternotesv2.common.toFirebaseNote
 import com.shinjaehun.winternotesv2.common.toNote
 import com.shinjaehun.winternotesv2.common.toNoteListFromRoomNoteList
 import com.shinjaehun.winternotesv2.common.toRoomNote
@@ -22,6 +24,25 @@ class NoteRepoImpl(
         return if (user != null) getRemoteNotes(user)
         else getLocalNotes()
     }
+
+    override suspend fun getNoteById(noteId: String): Result<Exception, Note> {
+        return getLocalNote(noteId)
+    }
+
+    override suspend fun deleteNote(note: Note): Result<Exception, Unit> {
+        return deleteLocalNote(note)
+    }
+
+    override suspend fun insertOrUpdateNote(note: Note): Result<Exception, Unit> {
+        val user = getActiveUser()
+        return if (user != null) updateRemoteNote(note.copy(creator = user))
+        else insertOrUpdateLocalNote(note)
+    }
+
+    override suspend fun searchNote(keyword: String): Result<Exception, List<Note>> {
+        return searchLocalNote(keyword)
+    }
+
 
     private fun getActiveUser(): User? {
         return firebaseAuth.currentUser?.toUser
@@ -48,20 +69,17 @@ class NoteRepoImpl(
         return Result.build { noteList }
     }
 
-    override suspend fun getNoteById(noteId: String): Result<Exception, Note> {
-        return getLocalNote(noteId)
-    }
-
-    override suspend fun deleteNote(note: Note): Result<Exception, Unit> {
-        return deleteLocalNote(note)
-    }
-
-    override suspend fun insertOrUpdateNote(note: Note): Result<Exception, Unit> {
-        return insertOrUpdateLocalNote(note)
-    }
-
-    override suspend fun searchNote(keyword: String): Result<Exception, List<Note>> {
-        return searchLocalNote(keyword)
+    private suspend fun updateRemoteNote(note: Note): Result<Exception, Unit> {
+        return try {
+            awaitTaskCompletable(
+                remote.collection(COLLECTION_NAME)
+                    .document(note.dateTime + note.creator!!.uid)
+                    .set(note.toFirebaseNote)
+            )
+            Result.build { Unit }
+        } catch (e: Exception) {
+            Result.build { throw e }
+        }
     }
 
     private suspend fun getLocalNotes(): Result<Exception, List<Note>> = Result.build {

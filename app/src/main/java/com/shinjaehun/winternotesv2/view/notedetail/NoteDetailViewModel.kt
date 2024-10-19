@@ -118,7 +118,6 @@ class NoteDetailViewModel(
         noteImageState.value = imageUri
     }
 
-
     private fun onNoteImageDelete(imagePath: String?) {
         noteImageDeletedState.value = imagePath
         launch {
