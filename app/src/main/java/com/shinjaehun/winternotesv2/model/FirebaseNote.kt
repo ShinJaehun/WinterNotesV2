@@ -1,7 +1,8 @@
 package com.shinjaehun.winternotesv2.model
 
+import android.net.Uri
+
 data class FirebaseNote (
-    val noteId: String? = "",
     val title: String? = "",
     val contents: String? = "",
     val dateTime: String? = "",

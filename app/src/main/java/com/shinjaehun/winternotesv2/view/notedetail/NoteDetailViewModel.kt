@@ -4,12 +4,17 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.firebase.auth.FirebaseAuth
 import com.shinjaehun.winternotesv2.common.BaseViewModel
+import com.shinjaehun.winternotesv2.common.FileUtils
 import com.shinjaehun.winternotesv2.common.GET_NOTE_ERROR
 import com.shinjaehun.winternotesv2.common.Result
+import com.shinjaehun.winternotesv2.common.awaitTaskResult
 import com.shinjaehun.winternotesv2.common.currentTime
+import com.shinjaehun.winternotesv2.common.toUser
 import com.shinjaehun.winternotesv2.model.INoteRepository
 import com.shinjaehun.winternotesv2.model.Note
+import com.shinjaehun.winternotesv2.model.User
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -29,8 +34,11 @@ class NoteDetailViewModel(
     private val noteImageState = MutableLiveData<Uri?>()
     val noteImage: LiveData<Uri?> get() = noteImageState
 
-    private val noteImageDeletedState = MutableLiveData<String?>()
-    val noteImageDeleted: LiveData<String?> get() = noteImageDeletedState
+//    private val noteImageDeletedState = MutableLiveData<String?>()
+//    val noteImageDeleted: LiveData<String?> get() = noteImageDeletedState
+
+    private val noteImageDeletedState = MutableLiveData<Uri?>()
+    val noteImageDeleted: LiveData<Uri?> get() = noteImageDeletedState
 
     private val noteColorState = MutableLiveData<String?>()
     val noteColor: LiveData<String?> get() = noteColorState
@@ -50,12 +58,25 @@ class NoteDetailViewModel(
 //    private val noteChangedState = MutableLiveData<Boolean>()
 //    val noteChanged: LiveData<Boolean> get() = noteChangedState
 
+//    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+//    private var user: User? = null
+//
+//    init {
+//        user = getActiveUser()
+//    }
+
+//    private fun getActiveUser(): User? {
+//        return firebaseAuth.currentUser?.toUser
+//    }
+
     override fun handleEvent(event: NoteDetailEvent) {
         when (event){
             is NoteDetailEvent.OnStart -> getNote(event.noteId)
             is NoteDetailEvent.OnDoneClick -> updateNote(event.title, event.contents, event.imagePath, event.color, event.webLink)
+//            is NoteDetailEvent.OnDoneClick -> updateNote(event.title, event.contents, event.imageUri, event.color, event.webLink)
             is NoteDetailEvent.OnNoteImageChange -> changeNoteImage(event.imageUri)
-            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete(event.imagePath)
+//            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete(event.imagePath)
+            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete(event.imageUri)
             is NoteDetailEvent.OnNoteColorChange -> changeNoteColor(event.color)
             is NoteDetailEvent.OnWebLinkChange -> changeWebLink(event.webLink)
             is NoteDetailEvent.OnWebLinkDeleteClick -> onWebLinkDelete()
@@ -68,7 +89,8 @@ class NoteDetailViewModel(
 //    }
 
     private fun getNote(noteId: String) = launch {
-        if (noteId == "0" || noteId.isNullOrEmpty()) {
+//        if (noteId == "0" || noteId.isNullOrEmpty()) {
+        if (noteId == "") {
             newNote()
         } else {
             val noteResult = noteRepo.getNoteById(noteId)
@@ -81,17 +103,18 @@ class NoteDetailViewModel(
 
     private fun newNote() {
         noteState.value =
-            Note("0", "", "", currentTime(), null, null, null, null)
+            Note("", "", currentTime(), null, null, null, null)
     }
 
     private fun updateNote(
         title: String,
         contents: String?,
         imagePath: String?,
+//        imageUri: Uri?,
         color: String?,
         webLink: String?
     ) = launch {
-        Log.i(TAG, "note before save: ${note.value!!}")
+//        Log.i(TAG, "note before save: ${note.value!!}")
 
         val updateResult = noteRepo.insertOrUpdateNote(
             note.value!!.copy(
@@ -103,6 +126,8 @@ class NoteDetailViewModel(
                 webLink = webLink
             )
         )
+
+        Log.i(TAG, "note after save: ${note.value!!}")
 
         when(updateResult){
             is Result.Value -> updatedState.value = true
@@ -118,12 +143,15 @@ class NoteDetailViewModel(
         noteImageState.value = imageUri
     }
 
-    private fun onNoteImageDelete(imagePath: String?) {
-        noteImageDeletedState.value = imagePath
-        launch {
-            //로컬 이미지처리 때문에 좀 복잡하게 움직임...
-            noteRepo.insertOrUpdateNote(note.value!!.copy(imagePath = null))
-        }
+//    private fun onNoteImageDelete(imagePath: String?) {
+    private fun onNoteImageDelete(imageUri: Uri?) {
+//        noteImageDeletedState.value = imagePath
+        noteImageDeletedState.value = imageUri
+//        launch {
+//            //로컬 이미지처리 때문에 좀 복잡하게 움직임...
+////            noteRepo.insertOrUpdateNote(note.value!!.copy(imagePath = null))
+//            noteRepo.insertOrUpdateNote(note.value!!.copy(imageUri = null))
+//        }
     }
 
     private fun changeNoteColor(color: String?) {

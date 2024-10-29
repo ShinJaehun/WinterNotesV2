@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -73,5 +74,9 @@ dependencies {
     runtimeOnly("com.intuit.ssp:ssp-android:1.1.0")
 
     implementation("com.makeramen:roundedimageview:2.3.0")
+
+    //coil
+    implementation(libs.coil3.coil)
+    implementation(libs.coil3.coil.network.okhttp)
 
 }

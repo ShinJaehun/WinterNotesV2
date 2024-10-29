@@ -44,7 +44,8 @@ class NoteListViewModel(
     }
 
     private fun editNote(position: Int) {
-        editNoteState.value = noteList.value!![position].noteId
+//        editNoteState.value = noteList.value!![position].noteId
+        editNoteState.value = noteList.value!![position].dateTime
     }
 
     private fun changeSearchText(searchKeyword: String) {

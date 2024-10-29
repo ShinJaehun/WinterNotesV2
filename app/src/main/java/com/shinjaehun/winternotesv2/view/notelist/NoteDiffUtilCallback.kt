@@ -5,10 +5,12 @@ import com.shinjaehun.winternotesv2.model.Note
 
 class NoteDiffUtilCallback: DiffUtil.ItemCallback<Note>() {
     override fun areItemsTheSame(oldItem: Note, newItem: Note): Boolean {
-        return oldItem.noteId == newItem.noteId
+//        return oldItem.noteId == newItem.noteId
+        return oldItem.dateTime == newItem.dateTime
     }
 
     override fun areContentsTheSame(oldItem: Note, newItem: Note): Boolean {
-        return oldItem.noteId == newItem.noteId
+//        return oldItem.noteId == newItem.noteId
+        return oldItem.dateTime == newItem.dateTime
     }
 }

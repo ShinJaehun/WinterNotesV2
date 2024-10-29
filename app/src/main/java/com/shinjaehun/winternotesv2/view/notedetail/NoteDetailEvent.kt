@@ -9,13 +9,15 @@ sealed class NoteDetailEvent {
         val title: String,
         val contents: String?,
         val imagePath: String?,
+//        val imageUri: Uri?,
         val color: String?,
         val webLink: String?
     ): NoteDetailEvent()
 
 //    data class OnNoteImageChange(val imagePath: String?): NoteDetailEvent()
     data class OnNoteImageChange(val imageUri: Uri?): NoteDetailEvent()
-    data class OnNoteImageDeleteClick(val imagePath: String?): NoteDetailEvent()
+//    data class OnNoteImageDeleteClick(val imagePath: String?): NoteDetailEvent()
+    data class OnNoteImageDeleteClick(val imageUri: Uri?): NoteDetailEvent()
 
     data class OnNoteColorChange(val color: String?): NoteDetailEvent()
 

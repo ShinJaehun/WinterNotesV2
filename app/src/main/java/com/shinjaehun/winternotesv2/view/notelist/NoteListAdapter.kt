@@ -3,16 +3,20 @@ package com.shinjaehun.winternotesv2.view.notelist
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil3.load
 import com.shinjaehun.winternotesv2.common.ColorBLACK
 import com.shinjaehun.winternotesv2.common.simpleDate
 import com.shinjaehun.winternotesv2.databinding.ItemContainerNoteBinding
 import com.shinjaehun.winternotesv2.model.Note
+
+private const val TAG = "NoteListAdapter"
 
 class NoteListAdapter(
     val event: MutableLiveData<NoteListEvent> = MutableLiveData()
@@ -36,10 +40,14 @@ class NoteListAdapter(
                 binding.tvDateTime.text = simpleDate(note.dateTime)
 
                 if (note.imagePath.isNullOrEmpty()) {
+//                if (note.imageUri == null) {
                     binding.rivImagePreview.visibility = View.GONE
                 } else {
-                    binding.rivImagePreview.setImageURI(Uri.parse(note.imagePath))
+//                    binding.rivImagePreview.setImageURI(Uri.parse(note.imagePath))
+//                    binding.rivImagePreview.setImageURI(note.imageUri)
                     binding.rivImagePreview.visibility = View.VISIBLE
+                    binding.rivImagePreview.load(note.imagePath)
+                    Log.i(TAG, "${note.imagePath}")
                 }
 
                 val gradientDrawable = binding.layoutNote.background as GradientDrawable

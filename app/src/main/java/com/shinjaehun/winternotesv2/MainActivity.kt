@@ -1,5 +1,6 @@
 package com.shinjaehun.winternotesv2
 
+import android.Manifest
 import android.content.Context
 import android.graphics.Point
 import android.os.Build
@@ -10,6 +11,7 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -48,6 +50,22 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val permissions = if(Build.VERSION.SDK_INT >= 33) {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+            )
+        } else {
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
+        ActivityCompat.requestPermissions(
+            this,
+            permissions,
+            0
+        )
 
         nav = Navigation.findNavController(this, R.id.fragment_nav)
 

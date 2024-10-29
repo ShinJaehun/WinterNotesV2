@@ -11,9 +11,12 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.shinjaehun.winternotesv2.R
 import com.shinjaehun.winternotesv2.common.makeToast
+import com.shinjaehun.winternotesv2.common.toUser
 import com.shinjaehun.winternotesv2.databinding.FragmentNoteListBinding
+import com.shinjaehun.winternotesv2.model.User
 
 private const val TAG = "NoteListView"
 
@@ -22,8 +25,10 @@ class NoteListView : Fragment() {
     private lateinit var binding: FragmentNoteListBinding
     private lateinit var viewModel: NoteListViewModel
     private lateinit var adapter: NoteListAdapter
+    private var user: User? = null
 
 //    private var timer: Timer? = null
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +51,8 @@ class NoteListView : Fragment() {
 
     override fun onStart() {
         super.onStart()
+
+        user = firebaseAuth.currentUser?.toUser
 
         viewModel = ViewModelProvider(
             this,
@@ -74,7 +81,7 @@ class NoteListView : Fragment() {
         adapter.event.observe(
             viewLifecycleOwner,
             Observer {
-                Log.i(TAG, "what is it? $it")
+//                Log.i(TAG, "what is it? $it")
                 viewModel.handleEvent(it)
             }
         )
@@ -94,6 +101,7 @@ class NoteListView : Fragment() {
         viewModel.noteList.observe(
             viewLifecycleOwner,
             Observer { noteList ->
+                Log.i(TAG, "noteList $noteList")
                 adapter.submitList(noteList)
             }
         )
