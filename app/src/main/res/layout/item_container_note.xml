@@ -9,16 +9,25 @@
     android:layout_marginTop="@dimen/_12sdp"
     android:orientation="vertical">
 
-    <com.makeramen.roundedimageview.RoundedImageView
+<!--    <com.makeramen.roundedimageview.RoundedImageView-->
+<!--        android:id="@+id/riv_imagePreview"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:maxHeight="@dimen/_100sdp"-->
+<!--        android:scaleType="centerCrop"-->
+<!--        android:adjustViewBounds="true"-->
+<!--        android:visibility="gone"-->
+<!--        app:riv_corner_radius_top_left="@dimen/_10sdp"-->
+<!--        app:riv_corner_radius_top_right="@dimen/_10sdp"/>-->
+
+    <ImageView
         android:id="@+id/riv_imagePreview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:maxHeight="@dimen/_100sdp"
         android:scaleType="centerCrop"
         android:adjustViewBounds="true"
-        android:visibility="gone"
-        app:riv_corner_radius_top_left="@dimen/_10sdp"
-        app:riv_corner_radius_top_right="@dimen/_10sdp"/>
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/tv_title"

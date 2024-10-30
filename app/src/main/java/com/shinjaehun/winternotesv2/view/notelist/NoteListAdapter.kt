@@ -11,6 +11,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
+import coil3.request.crossfade
+import coil3.size.Scale
 import com.shinjaehun.winternotesv2.common.ColorBLACK
 import com.shinjaehun.winternotesv2.common.simpleDate
 import com.shinjaehun.winternotesv2.databinding.ItemContainerNoteBinding
@@ -46,8 +48,10 @@ class NoteListAdapter(
 //                    binding.rivImagePreview.setImageURI(Uri.parse(note.imagePath))
 //                    binding.rivImagePreview.setImageURI(note.imageUri)
                     binding.rivImagePreview.visibility = View.VISIBLE
-                    binding.rivImagePreview.load(note.imagePath)
-                    Log.i(TAG, "${note.imagePath}")
+                    binding.rivImagePreview.load(note.imagePath) {
+                        scale(Scale.FIT)
+                    }
+//                    Log.i(TAG, "${note.imagePath}")
                 }
 
                 val gradientDrawable = binding.layoutNote.background as GradientDrawable

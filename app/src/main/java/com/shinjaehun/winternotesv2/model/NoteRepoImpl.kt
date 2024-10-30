@@ -124,6 +124,7 @@ class NoteRepoImpl(
     private suspend fun updateRemoteNote(note: Note): Result<Exception, Unit> {
         return try {
 
+            Log.i(TAG, "updated note: $note")
 //            if(note.imagePath != null){
 //                Log.i(TAG, "note.imagePaht: ${note.imagePath}")
 ////                val originFileExtension = note.imagePath.substringAfterLast('.', "")

@@ -62,12 +62,10 @@ class NoteDetailView : Fragment() {
 
     private lateinit var binding: FragmentNoteDetailBinding
     private lateinit var viewModel: NoteDetailViewModel
-//    private var note: Note? = null
-//    private lateinit var imageStatus: ImageStatus
-//    private var user: User? = null
+    private var note: Note? = null
+    private lateinit var imageStatus: ImageStatus
 
-//    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val storageReference: StorageReference = FirebaseStorage.getInstance().reference
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,8 +83,6 @@ class NoteDetailView : Fragment() {
 
     override fun onStart() {
         super.onStart()
-
-//        user = firebaseAuth.currentUser?.toUser
 
         viewModel = ViewModelProvider(
             this,
@@ -118,27 +114,129 @@ class NoteDetailView : Fragment() {
 
                 val webUrl = binding.tvWebUrl.text.toString()
 
-                // remote에서만 완벽하게 동작하는 코드
-                val file = binding.ivNote.tag as Uri
-                // 다른 내용만 수정해버리면... uri는 비어 있으니까 여기서 null pointer exception 발생
-                
-                // awaitTaskResult()를 사용하는 식으로 변경할 수 없을까요?
-                val ref = storageReference.child("images/${file.lastPathSegment}")
-                ref.putFile(file)
-                    .addOnSuccessListener { task ->
-                        task.storage.downloadUrl.addOnSuccessListener {
-                            Log.i(TAG, "download url: ${it.toString()}")
-                            viewModel.handleEvent(
-                                NoteDetailEvent.OnDoneClick(
-                                    title = title,
-                                    contents = contents,
-                                    imagePath = it.toString(),
-                                    color = colorCode,
-                                    webLink = webUrl
-                                )
-                            )
+                // remote에서만 동작하는 코드
+
+                // new or update note
+                if (note!!.title == title &&
+                    note!!.contents == contents &&
+                    note!!.color == colorCode &&
+                    note!!.webLink == webUrl &&
+                    binding.ivNote.tag == null && // 여기에 뭐가 남아 있다면 uri가 변경된 거고... 이미지 변경한 거지
+                    imageStatus != ImageStatus.DELETED
+                ) {
+                    // 하나도 바뀌지 않은 경우...
+                    Log.i(TAG, "노트 업데이트하려고 했는데 변화 없음!")
+                    Log.i(TAG, "imageStatus: $imageStatus")
+
+                    findNavController().navigate(R.id.noteListView)
+                } else {
+                    // 뭔가 변경된 경우
+                    Log.i(TAG, "변경/업데이트")
+                    Log.i(TAG, "imageStatus: $imageStatus")
+
+                    if (binding.ivNote.tag != null) {
+                        if (imageStatus == ImageStatus.CHANGED && !note!!.imagePath.isNullOrEmpty()) {
+                            //헐 note!!.imagePath != null 이렇게 imagePath의 상태 확인 불가
+                            storage.getReferenceFromUrl(note!!.imagePath!!)
+                                .delete()
+                                .addOnSuccessListener {
+                                    Log.i(
+                                        TAG,
+                                        "note update: 이미지 바꿨는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요..."
+                                    )
+                                }
+                                .addOnFailureListener {
+                                    Log.i(TAG, "이미지 삭제 실패")
+                                }
                         }
+
+                        val fileUri = binding.ivNote.tag as Uri // tag not null
+
+                        // awaitTaskResult()를 사용하는 식으로 변경할 수 없을까요?
+                        storage.reference.child("images/${fileUri.lastPathSegment}")
+                            .putFile(fileUri)
+                            .addOnSuccessListener { task ->
+                                task.storage.downloadUrl.addOnSuccessListener {
+                                    Log.i(TAG, "download url: ${it.toString()}")
+                                    viewModel.handleEvent(
+                                        NoteDetailEvent.OnDoneClick(
+                                            title = title,
+                                            contents = contents,
+                                            imagePath = it.toString(),
+                                            color = colorCode,
+                                            webLink = webUrl
+                                        )
+                                    )
+                                    Log.i(TAG, "note update: 이미지 업로드... ")
+                                }
+                            }
+                            .addOnFailureListener {
+                                Log.i(TAG, "이미지 업로드 실패?")
+                            }
+
+                    } else if (imageStatus == ImageStatus.LOADED) {
+                        viewModel.handleEvent(
+                            NoteDetailEvent.OnDoneClick(
+                                title = title,
+                                contents = contents,
+                                imagePath = note!!.imagePath,
+                                color = colorCode,
+                                webLink = webUrl
+                            )
+                        )
+                        Log.i(TAG, "note update: 원래 이미지로 ...")
+                    } else {
+                        if (imageStatus == ImageStatus.DELETED && !note!!.imagePath.isNullOrEmpty()) {
+                            storage.getReferenceFromUrl(note!!.imagePath!!)
+                                .delete()
+                                .addOnSuccessListener {
+                                    Log.i(TAG, "이미지 삭제했는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요...")
+                                    imageStatus = ImageStatus.DELETED
+                                }
+                                .addOnFailureListener {
+                                    Log.i(TAG, "이미지 삭제 실패")
+                                }
+                        }
+
+                        viewModel.handleEvent(
+                            NoteDetailEvent.OnDoneClick(
+                                title = title,
+                                contents = contents,
+                                imagePath = null,
+                                color = colorCode,
+                                webLink = webUrl
+                            )
+                        )
+                        Log.i(TAG, "note update: 이미지 null ...")
                     }
+
+                    //                    val selectedImageFilePath = if (binding.ivNote.tag != null) {
+//                        Log.i(TAG, "새로운 이미지 생성됨")
+//                        // 이미지 pick으로 URI가 존재, 새로운 이미지 생성
+////                        Log.i(TAG, "uri of tag: ${(binding.ivNote.tag as Uri).path.toString()}")
+//                        if (imageStatus == ImageStatus.CHANGED && note!!.imagePath != null) {
+//                            if (File(note!!.imagePath!!).exists()) {
+//                                File(note!!.imagePath!!).delete()
+//                                Log.i(TAG, "이미지 바꿨는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요...")
+//                            }
+//                        }
+//                        FileUtils.fileFromContentUri(requireActivity(), binding.ivNote.tag as Uri).path
+//                    } else if (imageStatus == ImageStatus.LOADED) {
+//                        // 이미지를 삭제하지 않은 상태(원래 이미지)
+//                        Log.i(TAG, "예전 이미지 그대로 가기")
+//                        note!!.imagePath
+//                    } else if (imageStatus == ImageStatus.NULL) {
+//                        // 이미지가 없었어요
+//                        Log.i(TAG, "예전 이미지 없었음")
+//                        null
+//                    } else {
+//                        Log.i(TAG, "selectedImageFilePath가 null인디 이렇게 해도 되나요? 아마 이미지 삭제된 상태일 듯")
+//                        null
+//                    }
+
+
+                }
+
 
 //                // new or update note
 //                if (note!!.title == title &&
@@ -280,8 +378,6 @@ class NoteDetailView : Fragment() {
 //                    )
 //                }
 
-
-
             }
         }
 
@@ -323,9 +419,9 @@ class NoteDetailView : Fragment() {
         binding.ivDeleteImage.visibility = View.VISIBLE
         // FB에서 이미지 파일 삭제는 어떻게 하지?
         binding.ivDeleteImage.setOnClickListener {
-//            viewModel.handleEvent(
-//                NoteDetailEvent.OnNoteImageDeleteClick(Uri.parse(path))
-//            )
+            viewModel.handleEvent(
+                NoteDetailEvent.OnNoteImageDeleteClick
+            )
         }
     }
 
@@ -337,9 +433,9 @@ class NoteDetailView : Fragment() {
 
         binding.ivDeleteImage.visibility = View.VISIBLE
         binding.ivDeleteImage.setOnClickListener {
-//            viewModel.handleEvent(
-//                NoteDetailEvent.OnNoteImageDeleteClick(null)
-//            )
+            viewModel.handleEvent(
+                NoteDetailEvent.OnNoteImageDeleteClick
+            )
         }
     }
 
@@ -365,15 +461,13 @@ class NoteDetailView : Fragment() {
         viewModel.note.observe(
             viewLifecycleOwner,
             Observer {
-//                note = it // 항상 받아오게 된다... noteId가 0인 경우에도 NewNote()를 실행하기 때문!
-//                if (note!!.imagePath != null){
-////                if (note!!.imageUri != null){
-//                    imageStatus = ImageStatus.LOADED
-//                } else {
-//                    imageStatus = ImageStatus.NULL
-//                }
+                note = it // 항상 받아오게 된다... noteId가 0인 경우에도 NewNote()를 실행하기 때문!
+                if (note!!.imagePath != null){
+                    imageStatus = ImageStatus.LOADED
+                } else {
+                    imageStatus = ImageStatus.NULL
+                }
 
-//                Log.i(TAG, "note in observe: $note")
                 binding.etNoteTitle.text = it.title.toEditable()
                 binding.tvDateTime.text = it.dateTime
 
@@ -397,20 +491,14 @@ class NoteDetailView : Fragment() {
                 }
 
                 if (!it.imagePath.isNullOrEmpty()) {
-//                    showImageFromPath(it.imagePath)
                     showImageFromUrl(it.imagePath)
                 }
-//                if (it.imageUri != null) {
-//                    showImageFromUri(it.imageUri)
-//                }
 
                 if (!it.webLink.isNullOrEmpty()) {
                     showWebLink(it.webLink)
                 }
 
-//                if (it.noteId != "0") {
-//                    binding.misc.layoutDeleteNote.visibility = View.VISIBLE
-//                }
+                binding.misc.layoutDeleteNote.visibility = View.VISIBLE
             }
         )
 
@@ -430,32 +518,44 @@ class NoteDetailView : Fragment() {
             Observer { imageUri ->
                 if (imageUri != null) {
                     showImageFromUri(imageUri)
-//                    imageStatus = ImageStatus.CHANGED
+                    imageStatus = ImageStatus.CHANGED
                 }
             }
         )
 
         viewModel.noteImageDeleted.observe(
             viewLifecycleOwner,
-            Observer { imagePath ->
-                // FB에서 이미지 파일 삭제는 어떻게 하지?
-                // local에서만 해야 하는 작업
+            Observer {
+                // 여기에 이미지를 삭제하는 로직이 있어서 그래...
+                // 이미지 삭제 + note update는 동시에 이루어져야 함!
 //                if (imagePath != null) {
-//                    if(File(imagePath).exists()) {
-//                        File(imagePath).delete()
-//                        Log.i(TAG, "이미지 삭제했어요...")
+//                    storage.getReferenceFromUrl(imagePath)
+//                        .delete()
+//                        .addOnSuccessListener {
+//                            Log.i(TAG,"이미지 삭제...")
+//                        }
+//                        .addOnFailureListener {
+//                            Log.i(TAG, "이미지 삭제 실패")
+//                        }
+//                        // 중요
+//                        // 이미지 삭제한 다음에 뒤로가기 버튼을 누르면..
+//                        // 이미지는 삭제되고 링크만 남게 되어서 문제가 생김
 //                        imageStatus = ImageStatus.DELETED
-//                    }
 //                } else {
 //                    if(imageStatus == ImageStatus.CHANGED && note!!.imagePath != null) {
-//                        if(File(note!!.imagePath!!).exists()) {
-//                            File(note!!.imagePath!!).delete()
-//                            Log.i(TAG, "이미지 바꿨는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요...")
-//                            imageStatus = ImageStatus.DELETED
-//                            // 얘전 이미지를 삭제한 것에 불과하지만 이미지가 삭제된 상태임을 알려야 update가 갱신된다...
-//                        }
+//                        storage.getReferenceFromUrl(note!!.imagePath!!)
+//                            .delete()
+//                            .addOnSuccessListener {
+//                                Log.i(TAG, "이미지 바꿨는데 예전에 이미지가 남아 있어서 예전 이미지를 삭제했어요...")
+//                                imageStatus = ImageStatus.DELETED
+//                            }
+//                            .addOnFailureListener {
+//                                Log.i(TAG, "이미지 삭제 실패")
+//                            }
 //                    }
 //                }
+                imageStatus = ImageStatus.DELETED
+
                 binding.ivNote.tag = null
 
                 binding.ivNote.visibility = View.GONE
@@ -493,11 +593,17 @@ class NoteDetailView : Fragment() {
             viewLifecycleOwner,
             Observer {
                 // FB에서 이미지 파일 삭제는 어떻게 하지?
-//                if (note!!.imagePath != null) {
-//                    if (File(note!!.imagePath!!).exists()) {
-//                        File(note!!.imagePath!!).delete()
-//                    }
-//                }
+//                if (note!!.imagePath != null) { // //헐 note!!.imagePath != null 이렇게 imagePath의 상태 확인 불가
+                if (!note!!.imagePath.isNullOrEmpty()) {
+                    storage.getReferenceFromUrl(note!!.imagePath!!)
+                        .delete()
+                        .addOnSuccessListener {
+                            Log.i(TAG,"note 삭제하면서 이미지 삭제...")
+                        }
+                        .addOnFailureListener {
+                            Log.i(TAG, "이미지 삭제 실패")
+                        }
+                }
                 findNavController().navigate(R.id.noteListView)
             }
         )
@@ -665,7 +771,7 @@ class NoteDetailView : Fragment() {
             viewModel.handleEvent(
                 NoteDetailEvent.OnNoteImageChange(uri)
             )
-//            imageStatus = ImageStatus.CHANGED
+            imageStatus = ImageStatus.CHANGED
         } else {
             Log.d("PhotoPicker", "No media selected")
         }

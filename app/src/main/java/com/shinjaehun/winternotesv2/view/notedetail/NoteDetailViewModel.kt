@@ -37,8 +37,11 @@ class NoteDetailViewModel(
 //    private val noteImageDeletedState = MutableLiveData<String?>()
 //    val noteImageDeleted: LiveData<String?> get() = noteImageDeletedState
 
-    private val noteImageDeletedState = MutableLiveData<Uri?>()
-    val noteImageDeleted: LiveData<Uri?> get() = noteImageDeletedState
+//    private val noteImageDeletedState = MutableLiveData<Uri?>()
+//    val noteImageDeleted: LiveData<Uri?> get() = noteImageDeletedState
+
+    private val noteImageDeletedState = MutableLiveData<Boolean>()
+    val noteImageDeleted: LiveData<Boolean> get() = noteImageDeletedState
 
     private val noteColorState = MutableLiveData<String?>()
     val noteColor: LiveData<String?> get() = noteColorState
@@ -75,8 +78,8 @@ class NoteDetailViewModel(
             is NoteDetailEvent.OnDoneClick -> updateNote(event.title, event.contents, event.imagePath, event.color, event.webLink)
 //            is NoteDetailEvent.OnDoneClick -> updateNote(event.title, event.contents, event.imageUri, event.color, event.webLink)
             is NoteDetailEvent.OnNoteImageChange -> changeNoteImage(event.imageUri)
-//            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete(event.imagePath)
-            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete(event.imageUri)
+            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete()
+//            is NoteDetailEvent.OnNoteImageDeleteClick -> onNoteImageDelete(event.imageUri)
             is NoteDetailEvent.OnNoteColorChange -> changeNoteColor(event.color)
             is NoteDetailEvent.OnWebLinkChange -> changeWebLink(event.webLink)
             is NoteDetailEvent.OnWebLinkDeleteClick -> onWebLinkDelete()
@@ -120,14 +123,12 @@ class NoteDetailViewModel(
             note.value!!.copy(
                 title = title,
                 contents = contents,
-                dateTime = currentTime(),
+//                dateTime = currentTime(),
                 imagePath = imagePath,
                 color = color,
                 webLink = webLink
             )
         )
-
-        Log.i(TAG, "note after save: ${note.value!!}")
 
         when(updateResult){
             is Result.Value -> updatedState.value = true
@@ -143,10 +144,10 @@ class NoteDetailViewModel(
         noteImageState.value = imageUri
     }
 
-//    private fun onNoteImageDelete(imagePath: String?) {
-    private fun onNoteImageDelete(imageUri: Uri?) {
-//        noteImageDeletedState.value = imagePath
-        noteImageDeletedState.value = imageUri
+    private fun onNoteImageDelete() {
+//    private fun onNoteImageDelete(imageUri: Uri?) {
+        noteImageDeletedState.value = true
+//        noteImageDeletedState.value = imageUri
 //        launch {
 //            //로컬 이미지처리 때문에 좀 복잡하게 움직임...
 ////            noteRepo.insertOrUpdateNote(note.value!!.copy(imagePath = null))
